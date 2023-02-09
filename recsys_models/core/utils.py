@@ -2,25 +2,26 @@
 import torch
 import numpy as np
 
+
 def concat_fun(inputs, axis=-1):
     """Concats .... # need to fill in
-    
+
     Args:
         inputs:
-        
+
     Returns:
         To fill in.
     """
     if len(inputs) == 1:
         return inputs[0]
-    return torch.cat(inputs, dim=axis) # pylint: disable=torch as cat
+    return torch.cat(inputs, dim=axis)  # pylint: disable=torch as cat
 
 
 def slice_arrays(arrays, start=None, stop=None):
     """Slice an array or list of arrays.
 
     # TODO (@tien): need to understand this function better
-    
+
     This takes an array-like, or a list of
     array-likes, and outputs:
         - arrays[start:stop] if `arrays` is an array-like
@@ -70,4 +71,3 @@ def slice_arrays(arrays, start=None, stop=None):
             return arrays[start:stop]
         else:
             return [None]
-

@@ -30,7 +30,7 @@ import pandas as pd
 
 from torch.utils.tensorboard import SummaryWriter
 
-class TwoTaskTwoTowerSharedBottom(nn.Module):
+class NTasksNTowersSharedBottom(nn.Module):
     """https://arxiv.org/pdf/1706.05098.pdf
 
     Creates a network of two towers where its shared the same bottom DNN
@@ -86,7 +86,7 @@ class TwoTaskTwoTowerSharedBottom(nn.Module):
                     "task must be binary or regression, {} is illegal".format(task_type)
                 )
 
-        super(TwoTaskTwoTowerSharedBottom, self).__init__()
+        super(NTasksNTowersSharedBottom, self).__init__()
         # set values
         self.dnn_feature_columns = dnn_feature_columns
 

@@ -13,7 +13,8 @@ from jup.recsys_models.features import DenseFeature
 from jup.recsys_models.core.utils import concat_fun
 from jup.recsys_models.features import get_sparse_feature
 
-import torch 
+import torch
+
 
 def create_embedding_matrix(
     features,
@@ -41,7 +42,8 @@ def create_embedding_matrix(
 
     sparse_features = get_sparse_feature(features=features)
 
-    # reading: https://medium.com/@gautam.e/what-is-nn-embedding-really-de038baadd24
+    # reading:
+    # https://medium.com/@gautam.e/what-is-nn-embedding-really-de038baadd24
     embedding_dict = nn.ModuleDict(
         {
             feature.embedding_name: nn.Embedding(
@@ -62,9 +64,10 @@ def create_embedding_matrix(
 
 def get_feature_names(
     features: List[Union[DenseFeature, SparseFeature, VarLenSparseFeature]]
-    ) -> List:
+) -> List:
     features_dict = build_input_feature_column_index(features)
     return list(features_dict.keys())
+
 
 def build_input_feature_column_index(
     features: List[Union[DenseFeature, SparseFeature, VarLenSparseFeature]]
@@ -108,14 +111,14 @@ def build_input_feature_column_index(
 
 def combine_dnn_input(sparse_embedding_list, dense_value_list):
     """Combines all the provided list into one layer of value
-    
+
     Args:
         ## to be filled
-        
+
     Returns:
         ## to be filled
-    
-    Notes: 
+
+    Notes:
         ## will need to write unittest for this to understand this better.
     """
     if len(sparse_embedding_list) > 0 and len(dense_value_list) > 0:
@@ -125,7 +128,8 @@ def combine_dnn_input(sparse_embedding_list, dense_value_list):
             torch.cat(dense_value_list, dim=-1), start_dim=1)
         return concat_fun([sparse_dnn_input, dense_dnn_input])
     elif len(sparse_embedding_list) > 0:
-        return torch.flatten(torch.cat(sparse_embedding_list, dim=-1), start_dim=1)
+        return torch.flatten(
+            torch.cat(sparse_embedding_list, dim=-1), start_dim=1)
     elif len(dense_value_list) > 0:
         return torch.flatten(torch.cat(dense_value_list, dim=-1), start_dim=1)
     else:
