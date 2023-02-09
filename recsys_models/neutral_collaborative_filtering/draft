@@ -1,0 +1,35 @@
+step before optimizer
+
+loss improvement on epoch: 1
+[001/100] train: 0.6786 - val: 0.8185
+[002/100] train: 0.6511 - val: 0.8282
+[003/100] train: 0.6669 - val: 0.8258
+[004/100] train: 0.6463 - val: 0.8286
+[005/100] train: 0.6618 - val: 0.8255
+[006/100] train: 0.6403 - val: 0.8306
+[007/100] train: 0.6550 - val: 0.8271
+[008/100] train: 0.6362 - val: 0.8314
+[009/100] train: 0.6518 - val: 0.8321
+[010/100] train: 0.6325 - val: 0.8347
+[011/100] train: 0.6484 - val: 0.8309
+early stopping after epoch 011
+
+# step after the optimizer
+loss improvement on epoch: 1
+[001/100] train: 0.6540 - val: 0.8281
+[002/100] train: 0.6292 - val: 0.8335
+[003/100] train: 0.6448 - val: 0.8345
+[004/100] train: 0.6254 - val: 0.8331
+[005/100] train: 0.6400 - val: 0.8282
+[006/100] train: 0.6215 - val: 0.8363
+[007/100] train: 0.6366 - val: 0.8380
+[008/100] train: 0.6194 - val: 0.8370
+[009/100] train: 0.6338 - val: 0.8323
+[010/100] train: 0.6162 - val: 0.8373
+[011/100] train: 0.6307 - val: 0.8325
+early stopping after epoch 011
+
+
+
+
+python -m src.parse.parse_json data/meta_Books.json.gz data/books.csv

@@ -1,0 +1,2 @@
+import os
+os.chdir("/Users/tien/Documents/PythonEnvs/pytorch/")
