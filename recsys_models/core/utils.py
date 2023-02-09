@@ -1,6 +1,6 @@
 """Utils module for common functions"""
-import torch
 import numpy as np
+import torch
 
 
 def concat_fun(inputs, axis=-1):

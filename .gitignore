@@ -1,6 +1,9 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
+ **/__pycache__/
+ __pycache__/
+*.py[cod] 
+**/*.pyc
+*.pyc
 
 # C extensions
 *.so
@@ -51,4 +54,4 @@ docs/_build/
 
 # Pyre type checker
 .pyre/
-*.DS_Store
+**/.DS_Store

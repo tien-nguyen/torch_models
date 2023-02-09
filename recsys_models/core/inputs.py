@@ -1,19 +1,13 @@
 from collections import OrderedDict
-
-from typing import Union
-from typing import List
-
-from torch import nn
-from torch import Tensor
-
-from jup.recsys_models.features import SparseFeature
-from jup.recsys_models.features import VarLenSparseFeature
-from jup.recsys_models.features import DenseFeature
-
-from jup.recsys_models.core.utils import concat_fun
-from jup.recsys_models.features import get_sparse_feature
+from typing import List, Union
 
 import torch
+from torch import Tensor, nn
+
+from jup.recsys_models.core.utils import concat_fun
+from jup.recsys_models.features import (DenseFeature, SparseFeature,
+                                        VarLenSparseFeature,
+                                        get_sparse_feature)
 
 
 def create_embedding_matrix(
@@ -70,7 +64,7 @@ def get_feature_names(
 
 
 def build_input_feature_column_index(
-    features: List[Union[DenseFeature, SparseFeature, VarLenSparseFeature]]
+    features: List[Union[DenseFeature, SparseFeature]]
 ) -> OrderedDict:
     """Build a feature column index
 

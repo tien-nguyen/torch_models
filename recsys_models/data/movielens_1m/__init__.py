@@ -1,7 +1,8 @@
-import pandas as pd
-import numpy as np
-from pathlib import Path 
 import math
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 ########################
 # MovieLens - 1 M data #

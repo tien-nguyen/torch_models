@@ -1,6 +1,5 @@
 from collections import namedtuple
-from typing import List
-from typing import Union
+from typing import List, Union
 
 
 class SparseFeature(
