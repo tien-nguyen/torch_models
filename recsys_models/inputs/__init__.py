@@ -3,7 +3,8 @@ from typing import List, Union
 
 from torch import nn
 
-from jup.recsys_models.features import DenseFeature, SparseFeature
+from jup.recsys_models.features import (DenseFeature, SparseFeature,
+                                        VarLenSparseFeature)
 
 
 def build_input_feature_column_index(
@@ -87,3 +88,38 @@ def create_embedding_matrix(
         nn.init.normal_(tensor.weight, mean=0, std=init_stds)
 
     return embedding_dict.to(device)
+
+
+def compute_input_dim(features, include_sparse=True, include_dense=True):
+    # TODO (@tien): figure out what feature_group is for
+    
+    sparse_features = list(
+        filter(
+            lambda x : isinstance(x, (SparseFeature, VarLenSparseFeature)),
+            features
+        )
+    ) if len(features) else []
+    
+    dense_features = list(
+        filter(
+            lambda x : isinstance(x, DenseFeature), 
+            features
+        )
+    ) if len(features) else []
+    
+    dense_feature_dim = sum(
+        map(lambda x : x.dimension, dense_features)
+    )
+    
+
+    sparse_input_dim = sum(feat.embedding_dim for feat in sparse_features)
+    
+    input_dim = 0
+    
+    if include_dense:
+        input_dim += dense_feature_dim
+    
+    if include_sparse:
+        input_dim += sparse_input_dim
+    
+    return input_dim

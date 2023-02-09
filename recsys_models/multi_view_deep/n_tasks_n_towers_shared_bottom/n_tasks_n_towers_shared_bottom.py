@@ -459,6 +459,10 @@ class NTasksNTowersSharedBottom(nn.Module):
             the order of the feature based on the self.feature_col_index
         """
         
+        print("-------")
+        print(data)
+        print("******")
+        
         # for Tensorflow Board
         # hard code for now
         # the path should be a variable to pass in
