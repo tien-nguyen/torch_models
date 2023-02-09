@@ -4,7 +4,7 @@ Author:
     nguyen.ttq.tien@gmail.com
 """
 import time
-from typing import List, Mapping, Union
+from typing import Callable, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -44,6 +44,7 @@ class BaseModel(nn.Module):
         embedding_init_std: float = 0.0001, 
         device: str = "cpu",
         seed=1024,
+        tensorboard_path=None,
         **kwargs
     ):
         """
@@ -57,7 +58,7 @@ class BaseModel(nn.Module):
         super(BaseModel, self).__init__()
         
         self.device = device
-        
+        self.seed = seed  # not sure what is this for.
         self.features = features
         self._dense_features = None
         self._sparse_features = None
@@ -69,7 +70,6 @@ class BaseModel(nn.Module):
         
         # Embedding for Sparse features
         self.embedding_init_std = embedding_init_std
-        self.seed = seed
         
         # building the embedding dict for all the sparse features
         self.embedding_dict = create_embedding_matrix(
@@ -82,6 +82,12 @@ class BaseModel(nn.Module):
         
         # attach to the device that we have
         self.to(self.device)
+        
+        # tensorboard
+        self.tensorboard_path = tensorboard_path
+        self.tensorboard_writer = None
+        if self.tensorboard_path:
+            self.tensorboard_writer = SummaryWriter(self.tensorboard_path)
     
     @property
     def dense_features(self):
@@ -89,7 +95,7 @@ class BaseModel(nn.Module):
             self._dense_features =  get_dense_feature(
                 features=self.features
             )
-        return self._sparse_features
+        return self._dense_features
         
     @property
     def sparse_features(self):
@@ -100,8 +106,8 @@ class BaseModel(nn.Module):
             
         return self._sparse_features
 
-    def input_from_feature_columns(
-        self, data, features: List[Union[DenseFeature, SparseFeature]]
+    def inputs_from_feature_columns(
+        self, data
     ):
         """Extracts features from data
 
@@ -109,16 +115,13 @@ class BaseModel(nn.Module):
             data: ## to be filled
             feature_colums: to be filed
 
-        Returns:
+        Returns: # need to annotate the return here
 
         Notes:
             We will support dense feature by default
             Not support VarLen Sparse feature at this time.
 
         """
-        sparse_features = get_sparse_feature(features)
-
-        dense_features = get_dense_feature(features)
 
         sparse_embedding_list = [
             self.embedding_dict[feature.embedding_name](
@@ -129,11 +132,8 @@ class BaseModel(nn.Module):
                     ][1],
                 ].long()
             )
-            for feature in sparse_features
+            for feature in self.sparse_features
         ]
-
-        # print(" --- sparse embedding list ---")
-        # print(sparse_embedding_list)
 
         # for dense features, we do not need to extract from the embedding
         dense_feature_list = [
@@ -143,7 +143,7 @@ class BaseModel(nn.Module):
                     feature.name
                 ][1],
             ]
-            for feature in dense_features
+            for feature in self.dense_features
         ]
 
         return sparse_embedding_list, dense_feature_list
@@ -184,7 +184,7 @@ class BaseModel(nn.Module):
         else:
             self.loss_func = loss
 
-    def _get_loss_func(self, loss):
+    def _get_loss_func(self, loss) -> Callable:
         if loss == "binary_cross_entropy":
             loss_func = F.binary_cross_entropy
         elif loss == "mse":
@@ -224,10 +224,9 @@ class BaseModel(nn.Module):
 
         return total_reg_loss
 
-    # consider to move this to a common place.
     def evaluate(self, x, y, batch_size=256):
         """
-
+        # TODO: write more explanation here
         :param x: Numpy array of test data (if the model has a single input), or list of Numpy arrays (if the model has multiple inputs).
         :param y: Numpy array of target (label) data (if the model has a single output), or list of Numpy arrays (if the model has multiple outputs).
         :param batch_size: Integer or `None`. Number of samples per evaluation step. If unspecified, `batch_size` will default to 256.
@@ -239,10 +238,9 @@ class BaseModel(nn.Module):
             eval_result[name] = metric_fun(y, pred_ans)
         return eval_result
 
-    # consider to move this to a common place
     def predict(self, x, batch_size=256):
         """
-
+        # TODO: writer more explanation here
         :param x: The input data, as a Numpy array (or list of Numpy arrays if the model has multiple inputs).
         :param batch_size: Integer. If unspecified, it will default to 256.
         :return: Numpy array(s) of predictions.
@@ -314,7 +312,6 @@ class BaseModel(nn.Module):
         # for Tensorflow Board
         # hard code for now
         # the path should be a variable to pass in
-        writer = SummaryWriter('jup/recsys_models/multi_view_deep/two_task_two_tower_shared_bottom/runs/')
         input_data = [data[feature] for feature in self.feature_col_index]
 
         # we always do the validation while training model
@@ -380,9 +377,9 @@ class BaseModel(nn.Module):
                         x = x_train.to(self.device).float()
                         y = y_train.to(self.device).float()
 
-
-                        writer.add_graph(model, x)
-                        writer.flush()
+                        if self.tensorboard_writer:
+                            self.tensorboard_writer.add_graph(model, x)
+                            self.tensorboard_writer.flush()
 
                         # https://pytorch.org/docs/stable/generated/torch.squeeze.html
                         y_pred = model(x).squeeze()
@@ -435,7 +432,9 @@ class BaseModel(nn.Module):
             # Add epoch_logs
             epoch_logs["loss"] = total_loss_epoch / sample_num
             
-            writer.add_scalar("training_loss", epoch_logs['loss'], global_step=epoch)
+            if self.tensorboard_writer:
+                self.tensorboard_writer.add_scalar("training_loss", epoch_logs['loss'], global_step=epoch)
+                
             for name, result in train_result.items():
                 epoch_logs[name] = np.sum(result) / steps_per_epoch
 
@@ -466,4 +465,6 @@ class BaseModel(nn.Module):
                             + ": {0: .4f}".format(epoch_logs["val_" + name])
                         )
                 print(eval_str)
-        writer.flush()
+        
+        if self.tensorboard_writer:
+            self.tensorboard_writer.flush()
