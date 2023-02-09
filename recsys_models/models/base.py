@@ -1,4 +1,8 @@
-import os
+"""
+Author:
+    Tien T. Nguyen
+    nguyen.ttq.tien@gmail.com
+"""
 import time
 from typing import List, Mapping, Union
 
@@ -14,202 +18,88 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from jup.recsys_models.core.inputs import (build_input_feature_column_index,
-                                           combine_dnn_input,
                                            create_embedding_matrix)
-from jup.recsys_models.core.mlp import DNN
-from jup.recsys_models.core.prediction_layer import PredictionLayer
 from jup.recsys_models.core.utils import slice_arrays
 from jup.recsys_models.features import (DenseFeature, SparseFeature,
-                                        compute_input_dim, get_dense_feature,
-                                        get_sparse_feature)
+                                        get_dense_feature, get_sparse_feature)
 
 
-class NTasksNTowersSharedBottom(nn.Module):
-    """https://arxiv.org/pdf/1706.05098.pdf
-
-    Creates a network of two towers where its shared the same bottom DNN
-
-    Args
-        dnn_feature_columns: An iterable containing all the features used by deep part of the model.
-        bottom_dnn_hidden_units: list, list of positive integer or empty list, the layer number and units in each layer of shared bottom DNN.
-        tower_dnn_hidden_units: list, list of positive integer or empty list, the layer number and units in each layer of task-specific DNN.
-        l2_reg_linear: float, L2 regularizer strength applied to linear part
-        l2_reg_embedding: float, L2 regularizer strength applied to embedding vector
-        l2_reg_dnn: float, L2 regularizer strength applied to DNN
-        init_std: float, to use as the initialize std of embedding vector
-        seed: integer, to use as random seed.
-        dnn_dropout: float in [0,1), the probability we will drop out a given DNN coordinate.
-        dnn_activation: Activation function to use in DNN
-        dnn_use_bn: bool, Whether use BatchNormalization before activation or not in DNN
-        task_types: list of str, indicating the loss of each tasks, ``"binary"`` for  binary logloss or  ``"regression"`` for regression loss. e.g. ['binary', 'regression']
-        task_names: list of str, indicating the predict target of each tasks
-        device: str, ``"cpu"`` or ``"cuda:0"``
-        gpus: list of int or torch.device for multiple gpus. If None, run on `device`. `gpus[0]` should be the same gpu with `device`.
+class BaseModel(nn.Module):
+    """ Base class for all models in this repo.
+    
+    All of the models should subclass this class.
+    
+    This class contains some common utils for all models to use such as:
+        * embedding dict creation for sparse feature
+        * train step
+        * eval step
+        * predict step
+        
+    It does not, however, contain the forward method.
     """
-
+    
     def __init__(
-        self,
-        dnn_feature_columns,
-        bottom_dnn_hidden_units=(256, 128),
-        tower_dnn_hidden_units=(64,),
-        l2_reg_linear=0.00001,
-        l2_reg_embedding=0.00001,
-        l2_reg_dnn=0,
-        init_std=0.0001,
+        self, 
+        features: List[Union[SparseFeature, DenseFeature]],
+        embedding_init_std: float = 0.0001, 
+        device: str = "cpu",
         seed=1024,
-        dnn_dropout=0,
-        dnn_activation="relu",
-        dnn_use_bn=False,
-        task_types=("binary", "binary"),
-        task_names=("ctr", "ctcvr"),
-        device="cpu",
-        gpus=None,
+        **kwargs
     ):
-        # some checks
-        self.num_tasks = len(task_names)
-        if self.num_tasks <= 1:
-            raise ValueError("num_tasks must be greater than 1")
-        if len(dnn_feature_columns) == 0:
-            raise ValueError("dnn_feature_columns is null!")
-        if len(task_types) != self.num_tasks:
-            raise ValueError("num_tasks must be equal to the length of task_types")
-
-        for task_type in task_types:
-            if task_type not in ["binary", "regression"]:
-                raise ValueError(
-                    "task must be binary or regression, {} is illegal".format(task_type)
-                )
-
-        super(NTasksNTowersSharedBottom, self).__init__()
-        # set values
-        self.dnn_feature_columns = dnn_feature_columns
-
-        self.tower_dnn_hidden_units = tower_dnn_hidden_units
-        self.l2_reg_linear = l2_reg_linear
-        self.l2_reg_embedding = l2_reg_embedding
-        self.l2_reg_dnn = l2_reg_dnn
-        self.init_std = init_std
-        self.seed = seed  # not sure if this is for.
-
-        # build up the embeddding dict for sparse features
-        # consider move to a Base one
-        self.embedding_dict = create_embedding_matrix(
-            self.dnn_feature_columns, self.init_std
-        )
-
-        # also consider move this to a base class
-        self.feature_col_index = build_input_feature_column_index(
-            self.dnn_feature_columns
-        )
-
-        # For DNN block
-        self.bottom_dnn_hidden_units = bottom_dnn_hidden_units
-        self.dnn_dropout = dnn_dropout
-        self.dnn_activation = dnn_activation
-        self.dnn_use_bn = dnn_use_bn
-
-        self.task_types = task_types
+        """
+        Args:
+            features: an list of features used by the model
+            emdding_init_std: float, to use as the initialize std of embedding vector
+            device: cpu or gpu
+            seed: integer, to use as random seed.
+    
+        """
+        super(BaseModel, self).__init__()
+        
         self.device = device
-        self.gpus = gpus
-
-        self.task_names = task_names
-        self.input_dim = compute_input_dim(dnn_feature_columns)
-
-        # regularization_weight
+        
+        self.features = features
+        self._dense_features = None
+        self._sparse_features = None
+        
+        # build feature column index
+        self.feature_col_index = build_input_feature_column_index(
+            self.features
+        )
+        
+        # Embedding for Sparse features
+        self.embedding_init_std = embedding_init_std
+        self.seed = seed
+        
+        # building the embedding dict for all the sparse features
+        self.embedding_dict = create_embedding_matrix(
+            self.sparse_features, self.embedding_init_std,
+            device=self.device
+        )
+        
+        # regularization_weight - @ TODO: will need to understand this.
         self.regularization_weight = []
-
-        self.bottom_dnn = DNN(
-            self.input_dim,
-            self.bottom_dnn_hidden_units,
-            activation=self.dnn_activation,
-            dropout_rate=self.dnn_dropout,
-            use_bn=self.dnn_use_bn,
-            init_std=init_std,
-            device=device,
-        )
-        if len(self.tower_dnn_hidden_units) > 0:
-            # Another n blocks of MLP (DNN) for each tower
-            self.tower_dnn = nn.ModuleList(
-                [
-                    DNN(
-                        self.bottom_dnn_hidden_units[-1],
-                        self.tower_dnn_hidden_units,
-                        activation=self.dnn_activation,
-                        dropout_rate=self.dnn_dropout,
-                        use_bn=self.dnn_use_bn,
-                        init_std=init_std,
-                        device=device,
-                    )
-                    for _ in range(self.num_tasks)
-                ]
-            )
-
-            # TODO (needs to do research on this)
-            self.add_regularization_weight(
-                filter(
-                    lambda x: "weight" in x[0] and "bn" not in x[0],
-                    self.tower_dnn.named_parameters(),
-                )
-            )
-
-        # Note: the output for each layer is just a number
-        # we do not to final tune at this moment
-        self.tower_dnn_final_layer = nn.ModuleList(
-            [
-                nn.Linear(
-                    tower_dnn_hidden_units[-1]
-                    if len(self.tower_dnn_hidden_units) > 0
-                    else self.bottom_dnn_hidden_units[-1],
-                    1,
-                    bias=False,
-                )
-                for _ in range(self.num_tasks)
-            ]
-        )
-
-        # outs
-        self.outs = nn.ModuleList([PredictionLayer(task) for task in task_types])
         
-        # testing to show the two ouputs
-        # self.output_one = PredictionLayer(task_types[0])
-        # self.output_two = PredictionLayer(task_types[1])
+        # attach to the device that we have
+        self.to(self.device)
+    
+    @property
+    def dense_features(self):
+        if not self._dense_features:
+            self._dense_features =  get_dense_feature(
+                features=self.features
+            )
+        return self._sparse_features
         
-        # need to undertand these regularization weight
-        self.add_regularization_weight(
-            filter(
-                lambda x: "weight" in x[0] and "bn" not in x[0],
-                self.bottom_dnn.named_parameters(),
-            ),
-            l2=l2_reg_dnn,
-        )
-        self.add_regularization_weight(
-            filter(
-                lambda x: "weight" in x[0] and "bn" not in x[0],
-                self.tower_dnn_final_layer.named_parameters(),
-            ),
-            l2=l2_reg_dnn,
-        )
+    @property
+    def sparse_features(self):
+        if not self._sparse_features:
+            self._sparse_features = get_sparse_feature(
+                features=self.features
+            )
+            
+        return self._sparse_features
 
-        # attach to device tha we have
-        self.to(device)
-
-    # maybe move this to a common place later
-    def add_regularization_weight(self, weight_list, l1=0.0, l2=0.0):
-        # For a Parameter, put it in a list to keep Compatible with
-        # get  get_regularization_loss()
-
-        if isinstance(weight_list, nn.parameter.Parameter):
-            weight_list = [weight_list]
-
-        # For generators, filters, and ParameterLists, convert
-        # them to a list of tensors to avoid bugs.
-        # e.g. can't pickle generator objects when we save the model
-        else:
-            weight_list = list(weight_list)
-
-        self.regularization_weight.append((weight_list, l1, l2))
-
-    # maybe move this to a common place later
     def input_from_feature_columns(
         self, data, features: List[Union[DenseFeature, SparseFeature]]
     ):
@@ -228,36 +118,7 @@ class NTasksNTowersSharedBottom(nn.Module):
         """
         sparse_features = get_sparse_feature(features)
 
-        # print(" in input from feature columsn ")
-        # print(sparse_features)
-
         dense_features = get_dense_feature(features)
-        # print(dense_features)
-
-        # print("-----")
-
-        # take everything, from column to that column
-        # feature_index is just a location of the feature in the input vector
-
-        # print("before calling to make sparse embedding list")
-        # print(list(self.embedding_dict.keys()))
-
-        # sparse_embedding_list = []
-
-        # for feature in sparse_features:
-        #     print(f"processing for {feature.name} with embedding name: {feature.embedding_name}")
-
-        #     _from = self.feature_col_index[feature.name][0]
-        #     _to = self.feature_col_index[feature.name][1]
-
-        #     print(f"from {_from} to {_to}")
-        #     _data = data[:, _from: _to]
-        #     print(_data)
-
-        #     embedding = self.embedding_dict[feature.embedding_name](data[:, _from: _to].long())
-
-        #     print(" retrieved embedding: ")
-        #     print(embedding)
 
         sparse_embedding_list = [
             self.embedding_dict[feature.embedding_name](
@@ -285,12 +146,8 @@ class NTasksNTowersSharedBottom(nn.Module):
             for feature in dense_features
         ]
 
-        # print("--- dense_feature_list ---")
-        # print(dense_feature_list)
-
         return sparse_embedding_list, dense_feature_list
 
-    # consider move this to a common place
     def set_optimizer(self, optimizer: str) -> None:
         """Sets optimizer for the model
 
@@ -316,7 +173,6 @@ class NTasksNTowersSharedBottom(nn.Module):
         else:
             self.optim = optimizer
 
-    # consider move this to a common place
     def set_loss_function(self, loss: Union[List, str]) -> None:
         """Sets the loss function
         See: https://pytorch.org/docs/stable/nn.functional.html#loss-functions
@@ -328,7 +184,6 @@ class NTasksNTowersSharedBottom(nn.Module):
         else:
             self.loss_func = loss
 
-    # consider move this to a common place (base class)
     def _get_loss_func(self, loss):
         if loss == "binary_cross_entropy":
             loss_func = F.binary_cross_entropy
@@ -340,7 +195,6 @@ class NTasksNTowersSharedBottom(nn.Module):
             raise NotImplementedError
         return loss_func
 
-    # consider move this to a common place
     def set_metrics(self, metrics: List) -> None:
         """Sets a list of metrics used to evaluated by the model during training and testing"""
         self.metric_names = ["loss"]
@@ -352,7 +206,6 @@ class NTasksNTowersSharedBottom(nn.Module):
                 else:
                     raise NotImplementedError
 
-    # consider move this to a common place
     def get_regularization_loss(self):
         total_reg_loss = torch.zeros((1,), device=self.device)
         for weight_list, l1, l2 in self.regularization_weight:
@@ -416,7 +269,6 @@ class NTasksNTowersSharedBottom(nn.Module):
 
         return np.concatenate(pred_ans).astype("float64")
 
-    # consider move this to a common place
     def fit(
         self,
         data: Mapping[str, pd.Series],
@@ -615,52 +467,3 @@ class NTasksNTowersSharedBottom(nn.Module):
                         )
                 print(eval_str)
         writer.flush()
-
-    def forward(self, data):
-        """Forwards function to compute
-
-        Args:
-            # to be filled
-        Returns:
-            # to be filled
-        """
-
-        sparse_embedding_list, dense_value_list = self.input_from_feature_columns(
-            data, self.dnn_feature_columns
-        )
-
-        dnn_input = combine_dnn_input(
-            sparse_embedding_list=sparse_embedding_list,
-            dense_value_list=dense_value_list,
-        )
-
-        # print(f"_ dnn_input: {dnn_input}")
-        shared_bottom_output = self.bottom_dnn(dnn_input)
-        # print(f" --- shared_bottom_output: {shared_bottom_output} ")
-
-        # tower dnn (task-specific)
-        # note: n towers have the same MLP architecture
-        task_outs = []
-        for i in range(self.num_tasks):
-            if len(self.tower_dnn_hidden_units) > 0:
-                tower_dnn_out = self.tower_dnn[i](shared_bottom_output)
-                tower_dnn_logit = self.tower_dnn_final_layer[i](tower_dnn_out)
-
-            else:
-                tower_dnn_logit = self.tower_dnn_final_layer[i](shared_bottom_output)
-
-            output = self.outs[i](tower_dnn_logit)
-            # if i == 0:
-            #     output = self.output_one(tower_dnn_logit)
-            # else:
-            #     output = self.output_two(tower_dnn_logit)
-                
-            task_outs.append(output)
-
-        # what is torch cat means here
-        task_outs = torch.cat(task_outs, -1)
-        
-        # output
-        # print("task outs")
-        # print(task_outs)
-        return task_outs
