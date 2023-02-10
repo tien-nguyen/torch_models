@@ -194,9 +194,7 @@ class NTasksNTowersSharedBottom(BaseModel):
             dense_value_list=dense_value_list,
         )
 
-        # print(f"_ dnn_input: {dnn_input}")
         shared_bottom_output = self.bottom_dnn(dnn_input)
-        # print(f" --- shared_bottom_output: {shared_bottom_output} ")
 
         # tower dnn (task-specific)
         # note: n towers have the same MLP architecture
@@ -212,7 +210,6 @@ class NTasksNTowersSharedBottom(BaseModel):
             output = self.outs[i](tower_dnn_logit)
             task_outs.append(output)
 
-        # what is torch cat means here
         task_outs = torch.cat(task_outs, -1)
         
         return task_outs
