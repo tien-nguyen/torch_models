@@ -4,7 +4,7 @@ Author:
     nguyen.ttq.tien@gmail.com
 """
 import time
-from typing import Callable, List, Mapping, Union
+from typing import List, Mapping, Union, Callable
 
 import numpy as np
 import pandas as pd
@@ -22,6 +22,8 @@ from jup.recsys_models.core.inputs import (build_input_feature_column_index,
 from jup.recsys_models.core.utils import slice_arrays
 from jup.recsys_models.features import (DenseFeature, SparseFeature,
                                         get_dense_feature, get_sparse_feature)
+
+from jup.recsys_models.inputs import compute_input_dim
 
 
 class BaseModel(nn.Module):
@@ -88,6 +90,9 @@ class BaseModel(nn.Module):
         self.tensorboard_writer = None
         if self.tensorboard_path:
             self.tensorboard_writer = SummaryWriter(self.tensorboard_path)
+            
+        # input_dim
+        self.input_dim = compute_input_dim(features)
     
     @property
     def dense_features(self):

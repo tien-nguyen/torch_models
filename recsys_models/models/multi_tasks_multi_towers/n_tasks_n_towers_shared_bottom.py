@@ -1,28 +1,10 @@
 
-import os
-import time
-from typing import List, Mapping, Union
-
-import numpy as np
-import pandas as pd
 import torch
-import torch.utils.data as Data
-from sklearn.metrics import log_loss
 from torch import nn
-from torch.nn import functional as F
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
-from jup.recsys_models.core.inputs import (build_input_feature_column_index,
-                                           combine_dnn_input,
-                                           create_embedding_matrix)
+from jup.recsys_models.core.inputs import combine_dnn_input
 from jup.recsys_models.core.mlp import DNN
 from jup.recsys_models.core.prediction_layer import PredictionLayer
-from jup.recsys_models.core.utils import slice_arrays
-from jup.recsys_models.features import (DenseFeature, SparseFeature,
-                                        compute_input_dim, get_dense_feature,
-                                        get_sparse_feature)
 from jup.recsys_models.models.base import BaseModel
 
 
@@ -162,10 +144,6 @@ class NTasksNTowersSharedBottom(BaseModel):
         # outs
         self.outs = nn.ModuleList([PredictionLayer(task) for task in task_types])
         
-        # testing to show the two ouputs
-        # self.output_one = PredictionLayer(task_types[0])
-        # self.output_two = PredictionLayer(task_types[1])
-        
         # need to undertand these regularization weight
         self.add_regularization_weight(
             filter(
@@ -182,7 +160,7 @@ class NTasksNTowersSharedBottom(BaseModel):
             l2=l2_reg_dnn,
         )
 
-        # attach to device tha we have
+        # attach to device that we have
         self.to(device)
 
     def add_regularization_weight(self, weight_list, l1=0.0, l2=0.0):

@@ -1,2 +1,0 @@
-from jup.recsys_models.multi_view_deep.n_tasks_n_towers_shared_bottom.n_tasks_n_towers_shared_bottom import \
-    NTasksNTowersSharedBottom
