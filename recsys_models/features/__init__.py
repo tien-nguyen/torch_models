@@ -8,13 +8,8 @@ class SparseFeature(
         ['name', 'vocabulary_size', 'embedding_dim', 'embedding_name',
          'use_hash', 'dtype'])):
     
-    # Note: I remove the DEFAULT_GROUP_NAME as I dont know what that is used for.
-    
-    # what exactly we have this slot is here for?
-    # maybe prevent from creating a new field?
     __slots__ = ()
     
-    # Why we need to have __new__ here ?
     def __new__(cls, name, vocabulary_size, embedding_dim=4, use_hash=False, dtype="int32", embedding_name=None):
         
         if embedding_name is None:
@@ -38,17 +33,12 @@ class DenseFeature(namedtuple('DenseFeature', ['name', 'dimension', 'dtype'])):
     def __new__(cls, name, dimension=1, dtype="float32"):
         return super(DenseFeature, cls).__new__(cls, name, dimension, dtype)
     
-    # not sure what exactly we need the hash here
-    # TODO (@tien)
     def __hash__(self):
         return self.name.__hash__()
     
 
 class VarLenSparseFeature(namedtuple('VarLenSparseFeat',
                                   ['sparsefeat', 'maxlen', 'combiner', 'length_name'])):
-    
-    ### Not entirely sure what this VarLen Sparse Feature is.
-    ### To (@tien:) need to figure out
     
     __slots__ = ()
 
@@ -90,9 +80,7 @@ class VarLenSparseFeature(namedtuple('VarLenSparseFeat',
 #  FUNCTIONS                    #
 #################################
 
-def compute_input_dim(features, include_sparse=True, include_dense=True,
-                      feature_group=False):
-    # TODO (@tien): figure out what feature_group is for
+def compute_input_dim(features, include_sparse=True, include_dense=True):
     
     sparse_features = list(
         filter(
@@ -112,10 +100,7 @@ def compute_input_dim(features, include_sparse=True, include_dense=True,
         map(lambda x : x.dimension, dense_features)
     )
     
-    if feature_group:
-        sparse_input_dim = len(sparse_features)
-    else:
-        sparse_input_dim = sum(feat.embedding_dim for feat in sparse_features)
+    sparse_input_dim = sum(feat.embedding_dim for feat in sparse_features)
     
     input_dim = 0
     
