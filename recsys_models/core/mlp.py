@@ -10,16 +10,6 @@ from jup.recsys_models.core.activation_layer import activation_layer
 class DNN(nn.Module):
     """The Multi Layer Perception
 
-    Input shape:
-        - nD tensor with shape: ``(batch_size, ..., input_dim)``.
-        The most common situation would be a 2D input
-        with shape ``(batch_size, input_dim)``.
-
-    Output shape:
-        - nD tensor with shape: ``(batch_size, ..., hidden_size[-1])``.
-        For instance, for a 2D input with shape ``(batch_size, input_dim)``,
-        the output would have shape ``(batch_size, hidden_size[-1])``.
-
     Args:
         inputs_dim: input feature dimension
 

@@ -42,8 +42,6 @@ class MF(nn.Module):
         users_latent = self.u(users)
         movies_latent = self.m(movies)
         
-        # Need to understand what dim = 1 here means (TODO)
-        # Need to understand what this does here
         # Note:
         # The passed in information is the pair (user, movie).
         # Meaning: 

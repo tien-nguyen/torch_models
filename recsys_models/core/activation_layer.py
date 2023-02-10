@@ -10,7 +10,7 @@ class Identity(nn.Module):
         return inputs
 
 
-def activation_layer(name: str, hidden_size: int, dice_dim=2):
+def activation_layer(name: str, hidden_size: int):
     """Construct activation layers
     Args:
         name: str or nn.Module, name of activation function

@@ -28,12 +28,6 @@ def create_embedding_matrix(
     To make it simple, we wont support linear and sparse args here as well.
     """
 
-    # confirm that there is no dense features before we can build out
-    # embeddings for sparse features
-    # we also confirm that we wont support VarLen at this time.
-    # we only extract sparse feature
-    # we do not support dense feature at this time
-
     sparse_features = get_sparse_feature(features=features)
 
     # reading:
@@ -107,13 +101,11 @@ def combine_dnn_input(sparse_embedding_list, dense_value_list):
     """Combines all the provided list into one layer of value
 
     Args:
-        ## to be filled
-
-    Returns:
-        ## to be filled
+        sparse_embedding_list: list of sparse_embeddint values
+        dense_value_list: values for dense features
 
     Notes:
-        ## will need to write unittest for this to understand this better.
+        ## will need to write unittest
     """
     if len(sparse_embedding_list) > 0 and len(dense_value_list) > 0:
         sparse_dnn_input = torch.flatten(
