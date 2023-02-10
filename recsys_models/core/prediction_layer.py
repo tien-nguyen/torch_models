@@ -26,7 +26,7 @@ class PredictionLayer(nn.Module):
         self.task = task
 
         if self.use_bias:
-            # need to understand what this torch.zeros here means
+            # TODO (add more explanation)
             self.bias = nn.Parameter(torch.zeros((1, )))
 
     def forward(self, inputs):
