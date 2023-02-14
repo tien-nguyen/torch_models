@@ -4,10 +4,10 @@ import torch
 
 
 def concat_fun(inputs, axis=-1):
-    """Concats .... # need to fill in
+    """
 
     Args:
-        inputs:
+        inputs to fill in
 
     Returns:
         To fill in.
@@ -19,15 +19,6 @@ def concat_fun(inputs, axis=-1):
 
 def slice_arrays(arrays, start=None, stop=None):
     """Slice an array or list of arrays.
-
-    # TODO (@tien): need to understand this function better
-
-    This takes an array-like, or a list of
-    array-likes, and outputs:
-        - arrays[start:stop] if `arrays` is an array-like
-        - [x[start:stop] for x in arrays] if `arrays` is a list
-
-    Can also work on list/array of indices: `slice_arrays(x, indices)`
 
     Arguments:
         arrays: Single array or list of arrays.
