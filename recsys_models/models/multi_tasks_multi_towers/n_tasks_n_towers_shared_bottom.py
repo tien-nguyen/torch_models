@@ -85,7 +85,7 @@ class NTasksNTowersSharedBottom(BaseModel):
 
         # For DNN block
         self.bottom_dnn_hidden_units = bottom_dnn_hidden_units
-        self.dnn_dropout = dnn_dropout
+        self.dnn_dropout = dnn_dropout # regulization 
         self.dnn_activation = dnn_activation
         self.dnn_use_bn = dnn_use_bn
 
