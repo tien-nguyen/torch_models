@@ -55,7 +55,7 @@ class DNN(nn.Module):
         # are properly registerd and will be visibile by all Module methods
 
         # say we have 3 inputs, and 2 output,
-        # thenw we will declare this as nn.Linear(3, 2)
+        # then we will declare this as nn.Linear(3, 2)
         self.linears = nn.ModuleList(
             [
                 nn.Linear(hidden_units[i], hidden_units[i + 1])
@@ -63,8 +63,7 @@ class DNN(nn.Module):
             ]
         )
 
-        # note, we just dont do the Batch Norm for the first and the last
-        # nodes
+        # note, we just dont do the Batch Norm for the first and the last layers
         if self.use_bn:
             self.bn = nn.ModuleList(
                 [
@@ -73,7 +72,8 @@ class DNN(nn.Module):
                 ]
             )
 
-        self.activation_layes = nn.ModuleList(
+        # we also dont do the activation layers for the first and the last layers
+        self.activation_layers = nn.ModuleList(
             [
                 activation_layer(activation,
                                  hidden_units[i + 1])
@@ -100,7 +100,7 @@ class DNN(nn.Module):
             if self.use_bn:
                 fc = self.bn[i](fc)
 
-            fc = self.activation_layes[i](fc)
+            fc = self.activation_layers[i](fc)
             fc = self.dropout(fc)
 
             deep_input = fc
