@@ -27,10 +27,13 @@ class DNN(nn.Module):
             whether use BatchNormalization before activation or not
 
         seed: A python integer to use as random seed.
+    
+    Note:
+        Need to undertsand what dice_dim is for.
     """
 
     def __init__(self, input_dims, hidden_units, activation='relu', l2_reg=0,
-                 dropout_rate=0, use_bn=False, init_std=0.0001, dice_dim=3, seed=1024,
+                 dropout_rate=0, use_bn=False, init_std=0.0001, seed=1024,
                  device='cpu'):
 
         super(DNN, self).__init__()
@@ -73,8 +76,7 @@ class DNN(nn.Module):
         self.activation_layes = nn.ModuleList(
             [
                 activation_layer(activation,
-                                 hidden_units[i + 1],
-                                 dice_dim)
+                                 hidden_units[i + 1])
                 for i in range(len(hidden_units) - 1)
             ]
         )

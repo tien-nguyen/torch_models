@@ -15,8 +15,6 @@ def activation_layer(name: str, hidden_size: int):
     Args:
         name: str or nn.Module, name of activation function
         hidden_size: int, used for Dice activation // Data Adaptive Activation Function
-        dice_dim: int, used for Dice activation
-
     Return:
         act_layer: activation_layer
 
