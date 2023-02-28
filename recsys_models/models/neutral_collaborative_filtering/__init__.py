@@ -1,8 +1,10 @@
 # nn.Module is the base class for all the network
 
-from torch import nn
-import torch
 from itertools import zip_longest
+
+import torch
+from torch import nn
+
 
 def get_list(n):
     """

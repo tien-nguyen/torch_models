@@ -1,10 +1,13 @@
 
+from typing import List, Union
+
 import torch
 from torch import nn
 
 from jup.recsys_models.core.inputs import combine_dnn_input
 from jup.recsys_models.core.mlp import DNN
 from jup.recsys_models.core.prediction_layer import PredictionLayer
+from jup.recsys_models.features import DenseFeature, SparseFeature
 from jup.recsys_models.models.base import BaseModel
 
 
@@ -33,7 +36,7 @@ class NTasksNTowersSharedBottom(BaseModel):
 
     def __init__(
         self,
-        features,
+        features: List[Union[SparseFeature, DenseFeature]],
         bottom_dnn_hidden_units=(256, 128),
         tower_dnn_hidden_units=(64,),
         l2_reg_linear=0.00001,

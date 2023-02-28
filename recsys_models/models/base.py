@@ -4,7 +4,7 @@ Author:
     nguyen.ttq.tien@gmail.com
 """
 import time
-from typing import List, Mapping, Union, Callable
+from typing import Callable, List, Mapping, Union
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,6 @@ from jup.recsys_models.core.inputs import (build_input_feature_column_index,
 from jup.recsys_models.core.utils import slice_arrays
 from jup.recsys_models.features import (DenseFeature, SparseFeature,
                                         get_dense_feature, get_sparse_feature)
-
 from jup.recsys_models.inputs import compute_input_dim
 
 
