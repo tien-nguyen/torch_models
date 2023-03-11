@@ -17,72 +17,79 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from jup.recsys_models.core.inputs import (
-    build_input_feature_column_index,
-    create_embedding_matrix,
-)
+from jup.recsys_models.core.inputs import (build_input_feature_column_index,
+                                           create_embedding_matrix)
 from jup.recsys_models.core.utils import slice_arrays
-from jup.recsys_models.features import (
-    DenseFeature,
-    SparseFeature,
-    get_dense_feature,
-    get_sparse_feature,
-)
+from jup.recsys_models.features import (DenseFeature, SparseFeature,
+                                        get_dense_feature, get_sparse_feature)
 from jup.recsys_models.inputs import compute_input_dim
 
 
+'''
+Note: we can build a base class for both Linear and BaseLine Model 
+that have the sparse feature and dense features.
+
+'''
 class Linear(nn.Module):
     """
-    Linear model.
-        An example is that we can use this in a deep and wide model.
+        Linear model.
+            An example is that we can use this in a deep and wide model.
     """
-
-    def __init__(
-        self,
-        features: List[Union[SparseFeature, DenseFeature]],
-        init_std=0.0001,
-        device="cpu",
-    ):
+    def __init__(self, 
+                 features: List[Union[SparseFeature, DenseFeature]],
+                 init_std=0.0001,
+                 device='cpu'
+                 ):
+        
         super(Linear, self).__init__()
-
+        
         self.features = features
-
+        
         # build feature column index
-        self.feature_col_index = build_input_feature_column_index(self.features)
-
-        # To be continued.
+        self.feature_col_index = build_input_feature_column_index(
+            self.features
+        )
+        
+        # building the embedding dict for all the sparse features
+        self.embedding_dict = create_embedding_matrix(
+            self.sparse_features, init_stds=init_std,
+            device=device
+        )
+        
         @property
         def dense_features(self):
             if not self._dense_features:
-                self._dense_features = get_dense_feature(features=self.features)
+                self._dense_features =  get_dense_feature(
+                    features=self.features
+                )
             return self._dense_features
-
+        
         @property
         def sparse_features(self):
             if not self._sparse_features:
-                self._sparse_features = get_sparse_feature(features=self.features)
-
+                self._sparse_features = get_sparse_feature(
+                    features=self.features
+                )
+            
             return self._sparse_features
-
-
 class BaseModel(nn.Module):
-    """Base class for all models in this repo.
-
+    """ Base class for all models in this repo.
+    
     All of the models should subclass this class.
-
+    
     This class contains some common utils for all models to use such as:
         * embedding dict creation for sparse feature
         * train step
         * eval step
         * predict step
-
+        
     It does not, however, contain the forward method.
     """
-
+    
     def __init__(
-        self,
+        self, 
         features: List[Union[SparseFeature, DenseFeature]],
-        embedding_init_std: float = 0.0001,
+        embedding_init_std: float = 0.0001, 
         device: str = "cpu",
         seed=1024,
         tensorboard_path=None,
@@ -94,56 +101,65 @@ class BaseModel(nn.Module):
             emdding_init_std: float, to use as the initialize std of embedding vector
             device: cpu or gpu
             seed: integer, to use as random seed.
-
+    
         """
         super(BaseModel, self).__init__()
-
+        
         self.device = device
         self.seed = seed  # not sure what is this for.
         self.features = features
         self._dense_features = None
         self._sparse_features = None
-
+        
         # build feature column index
-        self.feature_col_index = build_input_feature_column_index(self.features)
-
+        self.feature_col_index = build_input_feature_column_index(
+            self.features
+        )
+        
         # Embedding for Sparse features
         self.embedding_init_std = embedding_init_std
-
+        
         # building the embedding dict for all the sparse features
         self.embedding_dict = create_embedding_matrix(
-            self.sparse_features, self.embedding_init_std, device=self.device
+            self.sparse_features, self.embedding_init_std,
+            device=self.device
         )
-
+        
         # regularization_weight - @ TODO: will need to understand this.
         self.regularization_weight = []
-
+        
         # attach to the device that we have
         self.to(self.device)
-
+        
         # tensorboard
         self.tensorboard_path = tensorboard_path
         self.tensorboard_writer = None
         if self.tensorboard_path:
             self.tensorboard_writer = SummaryWriter(self.tensorboard_path)
-
+            
         # input_dim
         self.input_dim = compute_input_dim(features)
-
+    
     @property
     def dense_features(self):
         if not self._dense_features:
-            self._dense_features = get_dense_feature(features=self.features)
+            self._dense_features =  get_dense_feature(
+                features=self.features
+            )
         return self._dense_features
-
+        
     @property
     def sparse_features(self):
         if not self._sparse_features:
-            self._sparse_features = get_sparse_feature(features=self.features)
-
+            self._sparse_features = get_sparse_feature(
+                features=self.features
+            )
+            
         return self._sparse_features
 
-    def inputs_from_feature_columns(self, data):
+    def inputs_from_feature_columns(
+        self, data
+    ):
         """Extracts features from data
 
         Args:
@@ -343,7 +359,7 @@ class BaseModel(nn.Module):
             So we need to convert this dictionary to a list first
             the order of the feature based on the self.feature_col_index
         """
-
+        
         # for Tensorflow Board
         # hard code for now
         # the path should be a variable to pass in
@@ -466,12 +482,10 @@ class BaseModel(nn.Module):
 
             # Add epoch_logs
             epoch_logs["loss"] = total_loss_epoch / sample_num
-
+            
             if self.tensorboard_writer:
-                self.tensorboard_writer.add_scalar(
-                    "training_loss", epoch_logs["loss"], global_step=epoch
-                )
-
+                self.tensorboard_writer.add_scalar("training_loss", epoch_logs['loss'], global_step=epoch)
+                
             for name, result in train_result.items():
                 epoch_logs[name] = np.sum(result) / steps_per_epoch
 
@@ -479,7 +493,8 @@ class BaseModel(nn.Module):
                 eval_result = self.evaluate(val_data, val_label, batch_size)
                 for name, result in eval_result.items():
                     epoch_logs["val_" + name] = result
-
+            
+            
             # verbose
             if verbose > 0:
                 epoch_time = int(time.time() - start_time)
@@ -501,6 +516,6 @@ class BaseModel(nn.Module):
                             + ": {0: .4f}".format(epoch_logs["val_" + name])
                         )
                 print(eval_str)
-
+        
         if self.tensorboard_writer:
             self.tensorboard_writer.flush()
