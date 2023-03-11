@@ -8,10 +8,10 @@ from jup.recsys_models.core.inputs import combine_dnn_input
 from jup.recsys_models.core.mlp import DNN
 from jup.recsys_models.core.prediction_layer import PredictionLayer
 from jup.recsys_models.features import DenseFeature, SparseFeature
-from jup.recsys_models.models.base import BaseModel
+from jup.recsys_models.models.base import DNNBaseModel
 
 
-class NTasksNTowersSharedBottom(BaseModel):
+class NTasksNTowersSharedBottom(DNNBaseModel):
     """https://arxiv.org/pdf/1706.05098.pdf
 
     Creates a network of two towers where its shared the same bottom DNN
