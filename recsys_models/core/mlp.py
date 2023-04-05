@@ -32,8 +32,10 @@ class DNN(nn.Module):
         Need to undertsand what dice_dim is for.
     """
 
-    def __init__(self, input_dims, hidden_units, activation='relu', l2_reg=0,
-                 dropout_rate=0, use_bn=False, init_std=0.0001, seed=1024,
+    def __init__(self, input_dims, 
+                 hidden_units, activation='relu', l2_reg=0,
+                 dropout_rate=0, use_bn=False, init_std=0.0001, 
+                 seed=1024,
                  device='cpu'):
 
         super(DNN, self).__init__()

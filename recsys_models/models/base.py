@@ -137,7 +137,6 @@ class DNNBaseModel(BaseModel):
     def __init__(
         self, 
         features: List[Union[SparseFeature, DenseFeature]],
-        linear_features: List[Union[SparseFeature, DenseFeature]] = [],
         embedding_init_std: float = 0.0001, 
         device: str = "cpu",
         seed=1024,

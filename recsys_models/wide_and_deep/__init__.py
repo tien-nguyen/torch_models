@@ -98,7 +98,6 @@ class WDL(DNNBaseModel):
         
         logit = self.linear_model(data)
         
-        # need to build out this for the linear features.
         dnn_input = combine_dnn_input(
             sparse_embedding_list=sparse_embedding_list,
             dense_value_list=dense_value_list,
