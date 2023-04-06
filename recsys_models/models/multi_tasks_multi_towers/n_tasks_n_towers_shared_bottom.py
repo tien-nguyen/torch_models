@@ -53,6 +53,16 @@ class NTasksNTowersSharedBottom(DNNBaseModel):
         gpus=None,
         tensorboard_path=None,
     ):
+
+        # call the base
+        super(NTasksNTowersSharedBottom, self).__init__(
+            features,
+            init_std,
+            device,
+            seed,
+            tensorboard_path
+        )
+        
         # some checks
         self.num_tasks = len(task_names)
         if self.num_tasks <= 1:
@@ -67,16 +77,7 @@ class NTasksNTowersSharedBottom(DNNBaseModel):
                 raise ValueError(
                     "task must be binary or regression, {} is illegal".format(task_type)
                 )
-
-        # call the base
-        super(NTasksNTowersSharedBottom, self).__init__(
-            features,
-            init_std,
-            device,
-            seed,
-            tensorboard_path
-        )
-        
+                
         self.tower_dnn_hidden_units = tower_dnn_hidden_units
         self.l2_reg_linear = l2_reg_linear
         self.l2_reg_embedding = l2_reg_embedding

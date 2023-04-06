@@ -41,6 +41,8 @@ class BaseModel(nn.Module):
                  device: str = "cpu",
                  **kwargs):
         
+        super(BaseModel, self).__init__()
+        
         self.features = features
         self._dense_features = None
         self._sparse_features = None
