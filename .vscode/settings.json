@@ -1,0 +1,4 @@
+{
+  "python.languageServer": "Pylance",
+  "python.defaultInterpreterPath": "/Users/tien/Documents/PythonEnvs/pytorch/env/bin/python"
+}
