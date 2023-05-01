@@ -122,6 +122,73 @@ class Linear(BaseModel):
             
             return self._sparse_features
         
+        if len(self.dense_features) > 0:
+            self.weight = nn.Parameter(
+                torch.Tensor(sum(
+                    fc.dimension for fc in self.dense_features), 1
+                ))
+        
+            torch.nn.init.normal_(self.weight, mean=0, std=embedding_init_std)
+            
+    def forward(self, data):
+        # sparse_embedding_list = [
+        #     self.embedding_dict[fe]
+        # ]
+        # what exactly we are doing it here?
+        # sparse_embedding_list = [
+        #     self.embedding_dict[self.sparse_features[i]](
+        #         x[:, self.feature_col_index[i]][0]:self.feature_col_index[i][1]
+        #     )
+        # ]
+        
+        # sparse_embedding_list, dense_value_list = self.inputs_from_feature_columns(data)
+        # we copy this code from the the base.py
+        # maybe we can consolidate this?
+        
+        sparse_embedding_list = [
+            self.embedding_dict[feature.embedding_name](
+                data[
+                    :,
+                    self.feature_col_index[feature.name][0] : self.feature_col_index[
+                        feature.name
+                    ][1],
+                ].long()
+            )
+            for feature in self.sparse_features
+        ]
+        
+        dense_feature_list = [
+            data[
+                :,
+                self.feature_col_index[feature.name][0] : self.feature_col_index[
+                    feature.name
+                ][1],
+            ]
+            for feature in self.dense_features
+        ]
+        
+        linear_logit = torch.zeros(
+            [data.shape[0], 1] 
+        )
+        
+        if len(sparse_embedding_list) > 0:
+            sparse_embedding_cat = torch.cat(sparse_embedding_list, dim=-1)
+            
+            sparse_feat_logit = torch.sum(sparse_embedding_cat, dim=-1, keepdim=True)
+            linear_logit += sparse_feat_logit
+        
+        
+        if len(dense_feature_list) > 0:
+            
+            dense_value_logit = torch.cat(
+                dense_feature_list, dim=-1
+            ).matmul(self.weight)
+            
+            linear_logit += dense_value_logit
+        
+        return linear_logit
+            
+                
 class DNNBaseModel(BaseModel):
     """ Base class for all models in this repo.
     

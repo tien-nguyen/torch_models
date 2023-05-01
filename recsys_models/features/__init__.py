@@ -127,4 +127,4 @@ def get_dense_feature(features: List[Union[SparseFeature, DenseFeature]]):
             lambda x : isinstance(x, DenseFeature),
             features
         ) if len(features) else []
-    ) 
+) 

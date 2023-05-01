@@ -56,7 +56,8 @@ class WDL(DNNBaseModel):
             dropout_rate=dnn_dropout,
             use_bn=dnn_use_bn)
         
-    
+
+        # this is just a linear model for the linear features
         self.dnn_linear = nn.Linear(
             dnn_hidden_units[-1],
             1,
