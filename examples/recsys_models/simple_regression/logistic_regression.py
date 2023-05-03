@@ -109,7 +109,9 @@ def run():
         
         if iter % N_EPOCHS == 0:
             
-            with torch.no_grad(): # why do we need to do this?
+            # why do we need to do this?
+            # because during the evaluation, the model is not trained
+            with torch.no_grad(): 
                 
                 # Calculate the loss and accuracy for the test dataset
                 correct_test = 0
