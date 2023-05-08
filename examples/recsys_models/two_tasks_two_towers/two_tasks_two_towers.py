@@ -63,6 +63,16 @@ def activation_layer(name: str, hidden_size: int) -> nn.Module:
     else:
         raise NotImplementedError
     
+
+def combine_dnn_input(sparse_embedding_list: List[List[float]], dense_value_list: List[List[float]]) -> torch.Tensor:
+    
+    sparse_value_tensor = torch.flatten(
+        torch.cat(sparse_embedding_list, dim=-1), stat_dim=1
+    )
+    
+    
+    return None 
+    
     
 def create_embedding_matrix(
     sparse_features: List[SparseFeature],
@@ -109,6 +119,38 @@ def compute_input_dim(dense_features: List[DenseFeature],
     return dense_feature_dim + sparse_feature_dim
 
 
+class PredictionLayer(nn.Module):
+    """The final layer to generate the output predictions
+    """
+    
+    def __init__(self, task='binary', use_bias=True, **kwargs):
+        
+        assert task in ['binary', 'regression'], "task must be 'binary' or 'regression"
+        self.task = task
+        self.use_bias = use_bias
+        
+        super(PredictionLayer, self).__init__()
+        
+        self.use_bias = use_bias
+        self.task = task
+        
+        if self.use_bias:
+            # should we intialize this bias?
+            self.bias = nn.Parameter(torch.zeros((1, )))
+        
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        outputs = inputs
+        
+        if self.use_bias:
+            outputs += self.bias
+        
+        if self.task == "binary":
+            outputs = torch.sigmoid(outputs)
+        
+        return outputs
+    
+    
+     
 class MLP(nn.Module):
     """The Multi Layer Perception
     Args:
@@ -204,7 +246,7 @@ class MLP(nn.Module):
         return deep_inputs
         
         
-class TwoTaskTwoTowerSharedBottom(torch.Module):
+class TwoTaskTwoTowerSharedBottom(nn.Module):
     
     def __init__(self,
                  features: List[Union[SparseFeature, DenseFeature]],
@@ -235,11 +277,6 @@ class TwoTaskTwoTowerSharedBottom(torch.Module):
                 self.features
             ) 
         )
-                    
-        
-        self.bottom_dnn_hidden_units = bottom_dnn_hidden_units
-        self.tower_dnn_hidden_units = tower_dnn_hidden_units
-        
         
         # First, we create a feature column index
         feature_col_index = build_input_feature_column_index(
@@ -277,7 +314,7 @@ class TwoTaskTwoTowerSharedBottom(torch.Module):
         self.tower_mlp_final_layer = nn.ModuleList(
             [
                 nn.Linear(
-                    mlp_tower_configs.hidden_dims[-1], 
+                    mlp_tower_config.hidden_dims[-1], 
                     1,
                     bias = False
                 )
@@ -287,5 +324,20 @@ class TwoTaskTwoTowerSharedBottom(torch.Module):
         
         
         # output nodes
+        self.outputs = nn.ModuleList(
+            [PredictionLayer(
+                task="binary",
+            ) for _ in self.mlp_tower_configs]
+        )
         
+        # need to add regularization
+        '''
+            The implementation that we follow for regularization is a bit confusing.
+            So we just use this instead.
+            https://discuss.pytorch.org/t/simple-l2-regularization/139
+        '''
+        
+        self.to(self.device)
+
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         
