@@ -106,6 +106,9 @@ def combine_dnn_input(sparse_embedding_list, dense_value_list):
 
     Notes:
         ## will need to write unittest
+        
+    This is to make this simple by concat the embeddings of 
+    sparse feature firs then we concat the dense features later.
     """
     if len(sparse_embedding_list) > 0 and len(dense_value_list) > 0:
         sparse_dnn_input = torch.flatten(

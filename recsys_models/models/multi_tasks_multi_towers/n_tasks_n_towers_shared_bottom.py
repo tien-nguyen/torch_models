@@ -190,7 +190,9 @@ class NTasksNTowersSharedBottom(DNNBaseModel):
         Returns:
             # to be filled
         """
-
+        # input data contains dense feature values
+        # and sparse feature ID.
+        # this is to perform the sparse feature ID looks up.
         sparse_embedding_list, dense_value_list = self.inputs_from_feature_columns(data)
 
         dnn_input = combine_dnn_input(

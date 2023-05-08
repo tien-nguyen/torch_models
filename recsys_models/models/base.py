@@ -276,7 +276,7 @@ class DNNBaseModel(BaseModel):
             Not support VarLen Sparse feature at this time.
 
         """
-
+        # we do the embedding conversion here
         sparse_embedding_list = [
             self.embedding_dict[feature.embedding_name](
                 data[

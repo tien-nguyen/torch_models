@@ -64,10 +64,10 @@ def activation_layer(name: str, hidden_size: int) -> nn.Module:
         raise NotImplementedError
     
 
-def combine_dnn_input(sparse_embedding_list: List[List[float]], dense_value_list: List[List[float]]) -> torch.Tensor:
+def combine_dnn_input(sparse_embedding_list: List[nn.Embedding], dense_value_list: List[torch.Tensor]) -> torch.Tensor:
     
     sparse_value_tensor = torch.flatten(
-        torch.cat(sparse_embedding_list, dim=-1), stat_dim=1
+        torch.cat(sparse_embedding_list, dim=-1), start_dim=1
     )
     
     

@@ -90,6 +90,7 @@ def create_embedding_matrix(
     return embedding_dict.to(device)
 
 
+# this has to be in a base file 
 def compute_input_dim(features, include_sparse=True, include_dense=True):
     # TODO (@tien): figure out what feature_group is for
     
