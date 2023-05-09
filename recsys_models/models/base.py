@@ -300,6 +300,12 @@ class DNNBaseModel(BaseModel):
             for feature in self.dense_features
         ]
 
+        print("---- sparse embedding list ------")
+        print(type(sparse_embedding_list))
+        print(type(sparse_embedding_list[0]))
+        print("---- dense feature list ------")
+        print(type(dense_feature_list))
+        
         return sparse_embedding_list, dense_feature_list
 
     def set_optimizer(self, optimizer: str) -> None:
@@ -546,6 +552,9 @@ class DNNBaseModel(BaseModel):
                             self.tensorboard_writer.add_graph(model, x)
                             self.tensorboard_writer.flush()
 
+                        print("in tqdm, the shape of x is {}".format(x.shape))
+                        print(type(x))
+                        
                         # https://pytorch.org/docs/stable/generated/torch.squeeze.html
                         y_pred = model(x).squeeze()
                         # forgot why we need to do this?

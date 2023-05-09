@@ -73,7 +73,7 @@ def combine_dnn_input(sparse_embedding_list: List[nn.Embedding], dense_value_lis
     
     return None 
     
-    
+
 def create_embedding_matrix(
     sparse_features: List[SparseFeature],
     init_stds=0.001,
@@ -339,5 +339,42 @@ class TwoTaskTwoTowerSharedBottom(nn.Module):
         
         self.to(self.device)
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def inputs_from_feature_columns(self, data: torch.Tensor) -> Dict[str, List[torch.Tensor]]:
+        # we do the embedding conversion here
+        sparse_embedding_list = [
+            self.embedding_dict[feature.embedding_name](
+                data[
+                    :,
+                    self.feature_col_index[feature.name][0] : self.feature_col_index[
+                        feature.name
+                    ][1],
+                ].long()
+            )
+            for feature in self.sparse_features
+        ]
+
+        # for dense features, we do not need to extract from the embedding
+        dense_feature_list = [
+            data[
+                :,
+                self.feature_col_index[feature.name][0] : self.feature_col_index[
+                    feature.name
+                ][1],
+            ]
+            for feature in self.dense_features
+        ]
         
+        return {
+            "sparse_embedding": sparse_embedding_list,
+            "dense_features": dense_feature_list
+        }
+        
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+        """
+        Inputs are Tensors
+        
+    
+        
+         we need to think how we pass tne tensor into here.
+         We have two type of Tensors: 1) SparseTensor, 2) DenseTensor.
+        """
