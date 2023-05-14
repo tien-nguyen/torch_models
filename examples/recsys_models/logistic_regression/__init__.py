@@ -1,1 +1,1 @@
-from jup.examples.recsys_models.simple_regression.simple_regression import Regression
+from jup.examples.recsys_models.logistic_regression.simple_regression import Regression

@@ -62,7 +62,10 @@ def run():
         
     # loss function and optimizer
     loss_fn = nn.MSELoss()  # mean square error
-    optimizer = optim.Adam(model.parameters(), lr=0.0001)
+    
+    # for L2 regularization, we use weight decay
+    # https://pytorch.org/docs/stable/optim.html
+    optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.01)
 
     n_epochs = 100   # number of epochs to run
     batch_size = 10  # size of each batch
