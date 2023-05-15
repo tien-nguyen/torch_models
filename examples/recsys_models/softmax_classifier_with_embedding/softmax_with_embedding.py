@@ -53,6 +53,8 @@ class Softmax(torch.nn.Module):
         self.dropout = nn.Dropout(p=dropout)
         
         self.user_embedding = nn.Embedding(n_users, embedding_dim)
+        nn.init.normal_(self.user_embedding.weight, mean=0, std=0.01)
+        
         self.linear = torch.nn.Linear(n_inputs+embedding_dim, n_outputs)
  
     def forward(self, x: torch.Tensor) -> torch.Tensor:
