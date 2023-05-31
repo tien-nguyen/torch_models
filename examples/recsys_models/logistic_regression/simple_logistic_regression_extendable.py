@@ -83,7 +83,13 @@ def run():
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
     
     x_train = torch.tensor(x_train, dtype=torch.float32)
-    y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
+    y_train = torch.tensor(y_train, dtype=torch.float32) #.reshape(-1, 1)
+    print("-----")
+    print(y_train)
+    print("****")
+    y_train = y_train.reshape(-1, 1)
+    print(y_train)
+    
     x_test = torch.tensor(x_test, dtype=torch.float32)
     y_test = torch.tensor(y_test, dtype=torch.float32).reshape(-1, 1)
     
